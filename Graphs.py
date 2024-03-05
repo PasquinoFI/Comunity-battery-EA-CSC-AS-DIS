@@ -2,6 +2,7 @@
 Graphs
 """
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
@@ -81,22 +82,29 @@ def PvsPRvsReg(P,PR,Reg,start,end,step):
     plt.show()
     
 # Graphs PR vs PR* vs Unbalances
-def PRvsPRfitted(PR,PR_fitted,Unb,start,end):
-    y1 = PR_fitted
-    y2 = PR[start:end]
-    y3 = Unb[start:end]
+def PRvsPRfitted(PR,PRF,Reg,RegF,start,end,la):
+    y1 = PR
+    y2 = PRF
+    y3 = Reg
+    y4 = RegF
     
     x=np.arange(len(y1))
     fig, (ax1,ax2) = plt.subplots(2,1,dpi=1000)
-    ax1.plot(x,y1,label='PR fitted')
-    ax1.plot(x,y2,label='PR')
+    
+    ax1.plot(x,y2,label='PR fitted')
+    ax1.plot(x,y1,label='PR')
+    
     ax1.legend()
     ax1.set_ylabel('Price [€/MWh]')
-    ax2.plot(x,-y3,label='Regulation = - Unbalance',color='green')
+    
+    ax2.plot(x, y4,label='Reg fitted',color='red')
+    ax2.plot(x, y3,label='Reg',color='green')
     ax2.plot(x,np.zeros(len(y3)),color='k')
+    
     ax2.legend()
     ax2.set_xlabel('Hour')
     ax2.set_ylabel('Energy [MWh]')
+    
     ax1.set_xlim(0,len(y1))
     ax2.set_xlim(0,len(y1))
     #ax1.set_ylim(0,200)
@@ -106,7 +114,7 @@ def PRvsPRfitted(PR,PR_fitted,Unb,start,end):
     ax1.grid()
     ax2.grid()
     ax1.set_xticklabels([])
-    plt.suptitle(f"{str(start)[:10]} to {str(end)[:10]}")
+    plt.suptitle(f"forecast {la}")
     plt.tight_layout()
     plt.show()
     
@@ -132,24 +140,27 @@ def premium_readiness(P_range,Premium_down,Premium_up):
     ax1.plot(P_range,Premium_up,label='Premium_up')
     ax1.legend(loc=3)
     ax1.set_ylabel('Premium [€/MWh]')
-    ax1.set_xlabel('Spot price [MWh]')
+    ax1.set_xlabel('Spot price [€/MWh]')
     ax1.grid()
     ax1.set_xlim(P_range[0],P_range[-1])
     plt.show()
     
 # R2vsDays
-def R2vsDays(R22,days,title):
+def R2vsDays(R22,lookback,lookahead,title):
 
     fig, ax1 = plt.subplots(dpi=1000)
-    
-    for la in R22:
-        ax1.plot(days,R22[la],label=la)
+
+    for la in range(lookahead):
+        R2 = []
+        for lb in lookback:
+            R2.append(R22[lb][la])
+        ax1.plot(lookback,R2,label=la)
     
     plt.legend(title='Looking ahead [days]')
     ax1.set_ylabel('R\u00B2 [-]')
     ax1.set_xlabel('Looking back [days]')
     ax1.grid()
-    ax1.set_xlim(days[0],days[-1])
+    ax1.set_xlim(lookback[0],lookback[-1])
     plt.suptitle(title)
     plt.show()
 
@@ -232,18 +243,16 @@ def rolling_reg_m(serie,window_size,step,title):
     plt.title(title)
     plt.show()
     
-def acf_pacf(serie,nlag,step,title):
+def acf_pacf(serie,alpha,title):
     
     fig, ax = plt.subplots(2, 1, dpi=1000)
-    plot_acf(serie, lags=nlag, ax=ax[0])
+    plot_acf(serie, ax=ax[0], alpha=alpha, bartlett_confint=False)
     ax[0].set_title('ACF')
-    plot_pacf(serie, lags=nlag, ax=ax[1])
+    plot_pacf(serie, ax=ax[1], alpha=alpha)
     ax[1].set_title('PACF')
     plt.tight_layout()
     ax[0].grid()  
     ax[1].grid() 
-    ax[0].set_xticks(range(0, nlag+1, step))
-    ax[1].set_xticks(range(0, nlag+1, step))
     plt.suptitle(title)
     plt.tight_layout()
     plt.show()
@@ -262,6 +271,25 @@ def ARIMAvsReal(serie_test,forecast,step,title):
     ax1.set_xticks(range(x[0], x[-1], step))
     plt.title(title)
     plt.show()
+    
+def ARIMAvsRealvsPre(serie_trial,serie_test,forecast,step,title):
+    
+    x=np.arange(len(serie_test)+len(serie_trial))   
+    
+    fig, ax1 = plt.subplots(dpi=1000)
+    
+    ax1.plot(x,pd.concat([serie_trial, forecast]),label='Forecasts')
+    ax1.plot(x,pd.concat([serie_trial, serie_test]),label='Real')
+    plt.legend()
+    plt.grid()
+    plt.xlim(x[0],x[-1])
+    
+    ax1.set_xticks(range(x[0], x[-1], step))
+    plt.title(title)
+    plt.show()
+    
+    
+    
     
     
     

@@ -60,18 +60,17 @@ def concat_xml_GME(folder,year1,month1,day1,year2,month2,day2,what):
         if year == year2 and month == month2 and day == day2:
             go = 0
             
-    df['Timeindex'] = pd.to_datetime(df['Data'])
-    df['Timeindex'] = pd.to_datetime(df['Timeindex']) + pd.to_timedelta(pd.to_numeric(df['Ora'])-1, unit='h')
+    df.index = pd.to_datetime(df['Data']) + pd.to_timedelta(pd.to_numeric(df['Ora'])-1, unit='h') # 0 - 23 
     
-    df['Giorno'] = df['Timeindex'].dt.day
-    df['Mese'] = df['Timeindex'].dt.month
-    df['Ora'] = df['Timeindex'].dt.hour
-    df.index = df['Timeindex']
+    # summer/solar time correction: delete duplicates and reach for skips 
+    df = df[~df.index.duplicated(keep='first')]
+    new_row = df.loc[pd.to_datetime('2023-03-26 22:00:00')].copy()
+    new_row.name = pd.to_datetime('2023-03-26 23:00:00')
+    df.loc[pd.to_datetime('2023-03-26 23:00:00')] = new_row
+    df = df.sort_index()
     
     return(df)
     
-
-#df = concat_xml_GME("C:/Users/pasqui/Desktop/MercatiElettrici/MGP_Prezzi",2023,1,1,2024,2,10,"MGPPrezzi")
     
 def concat_xlsx_Terna(folder,year1,month1,year2,month2,what):
     
@@ -102,14 +101,27 @@ def concat_xlsx_Terna(folder,year1,month1,year2,month2,what):
         if year == year2 and month == month2:
             go = 0
             
-    df['Timeindex'] = pd.to_datetime(df['Data Riferimento'])
-    df['Giorno'] = df['Timeindex'].dt.day
-    df['Mese'] = df['Timeindex'].dt.month
-    df['Ora'] = df['Timeindex'].dt.hour
-    df.index = df['Timeindex']
+    df.index =  pd.to_datetime(df['Data Riferimento'])
     
+    # summer/solar time correction: delete duplicates and reach for skips 
+    df.drop(pd.to_datetime('2023-10-29 02:01:00'), inplace=True)
+    new_rows = df.loc[pd.to_datetime('2023-03-26 01:00:00')].copy()
+    new_row1 = new_rows.iloc[0]
+    new_row2 = new_rows.iloc[1]
+    new_row1.name = pd.to_datetime('2023-03-26 02:00:00')
+    new_row2.name = pd.to_datetime('2023-03-26 02:00:00')
+    df.loc[pd.to_datetime('2023-03-26 02:00:00')] = new_row1
+    df.loc[pd.to_datetime('2023-03-26 02:00:00')] = new_row2
+    df = df.sort_index()
+
     return(df)
     
-#sb =  concat_xlsx_Terna("C:/Users/pasqui/Desktop/Sbilanciamenti",2023,1,2023,12,"Riepilogo_Mensile_Orario")
 
+def cut(serie,alpha):
     
+    lc = np.percentile(serie,alpha) # lower cut
+    uc = np.percentile(serie,100-alpha) # upper cut
+    serie[serie>uc] = uc
+    serie[serie<lc] = lc
+    
+    return(serie)
