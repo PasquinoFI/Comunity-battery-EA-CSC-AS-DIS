@@ -1,3 +1,8 @@
+"""
+Skytte model used to forecast PR(P,Reg)
+rolling horizon
+"""
+
 #%%
 import numpy as np
 import pandas as pd
@@ -6,7 +11,7 @@ import Graphs as gra
 from scipy.optimize import curve_fit
 from sklearn.metrics import r2_score
 from datetime import datetime, timedelta
-from Reg_arima import RegF_arima
+from Reg_arima import RegF_arima, RegF_sarima
 
 #%%##################################################################### import series 
 
@@ -22,53 +27,39 @@ unbalances = unbalances.loc[unbalances['Macrozona']=='SUD']
 PR = unbalances['Prezzo di sbilanciamento']
 Reg = -unbalances['Sbil aggregato zonale [MWh]']
 
-# Datacleaning 
-Reg = dbm.cut(Reg,5)
-PR = dbm.cut(PR,5)
-P = dbm.cut(P,5)
+#%%################################################################### datacleaning 
 
+# =============================================================================
+# gra.QQplot(Reg, "Reg")
+# gra.QQplot(PR, "PR")
+# gra.QQplot(P, "P")
+# =============================================================================
+Reg = dbm.cut_smart(Reg,-1000,1000)
+PR = dbm.cut_smart(PR,0,400)
+P = dbm.cut_smart(P,50,250)
+# =============================================================================
+# gra.QQplot(Reg, "Reg")
+# gra.QQplot(PR, "PR")
+# gra.QQplot(P, "P")
+# =============================================================================
 
 #%%################################################################ preliminary analysis
 
-# Graphs P 
+# PR and P vs Reg
 start = '2023-01-09 00:00:00'
 end = '2023-01-16 00:00:00'
 gra.DAMvsRegulation(P,PR,Reg,start,end,24)
 
-# Annual P vs REG vs 
+# Annual P vs REG vs PR
 start = '2023-01-01 00:00:00'
 end = '2024-01-31 00:00:00'
 gra.PvsPRvsReg(P,PR,Reg,start,end,24*31)
 
+# distributions
 title = f"{start[:10]} to {end[:10]}"
 gra.pdf(Reg[start:end],"Regulation [MWh]",title)
 gra.pdf(PR[start:end],"Regulation price [€/MWh]",title)
 gra.pdf(P[start:end],"Spot price [€/MWh]",title)
-
-
-# =============================================================================
-# start1 = '2023-01-01 00:00:00'
-# end1 = '2023-07-1 00:00:00'
-# title1 = f"{start1[:10]} to {end1[:10]}"
-# gra.pdf(Reg[start1:end1],"Regulation [MWh]",title1)
-# gra.pdf(PR[start1:end1],"Regulation price [€/MWh]",title1)
-# gra.pdf(P[start1:end1],"Spot price [€/MWh]",title1)
-# =============================================================================
-
-# =============================================================================
-# start2 = '2023-08-01 00:00:00'
-# end2 = '2024-01-31 00:00:00'
-# title2 = f"{start2[:10]} to {end2[:10]}"
-# gra.pdf(Reg[start2:end2],"Regulation [MWh]",title2)
-# gra.pdf(PR[start2:end2],"Regulation price [€/MWh]",title2)
-# gra.pdf(P[start2:end2],"Spot price [€/MWh]",title2)
-# =============================================================================
-
-# =============================================================================
-# for whis in [1,2,3,4,5]:
-#     whis = (whis,100-whis)
-#     gra.duble_boxplot(PR[start1:end1],PR[start2:end2],title1,title2,whis)
-# =============================================================================
 
 #%%############################################## fitting and testing rolling horizon the model
 
@@ -113,8 +104,10 @@ def Skytte_rolling_horizon(rollingstep,lookback,lookahead,start_sim,end_sim,arim
         coef, cov = curve_fit(Skytte_model, [P[start_trial:end_trial], Reg[start_trial:end_trial]], PR[start_trial:end_trial])
         
         # Reg(Reg-1) arima fitting
-        if arima:
+        if arima == True:
             RegF = RegF_arima(Reg[start_trial:end_trial],Reg[start_test:end_test],lookahead,alpha=0.01)
+        elif arima == 'S':
+            RegF = RegF_sarima(Reg[start_trial:end_trial],Reg[start_test:end_test],lookahead,alpha=0.01)
         else:        
             RegF = Reg[start_test:end_test]
             
@@ -136,8 +129,8 @@ rollingstep = 1
 lookback = 24*7
 lookahead = 3
 
-results = Skytte_rolling_horizon(rollingstep,lookback,lookahead,start_sim,end_sim)
-results = Skytte_rolling_horizon(rollingstep,lookback,lookahead,start_sim,end_sim,arima=True)
+arima = False # False/True/'S'
+results = Skytte_rolling_horizon(rollingstep,lookback,lookahead,start_sim,end_sim,arima=arima)
 
 # Graphs PR vs PR* vs Regulation
 

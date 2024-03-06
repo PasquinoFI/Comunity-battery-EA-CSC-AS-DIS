@@ -6,8 +6,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
-import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import scipy.stats as stats
 
 # Graphs DAM vs Unbalances
 def DAMvsRegulation(P,PR,Reg,start,end,step):
@@ -288,7 +288,14 @@ def ARIMAvsRealvsPre(serie_trial,serie_test,forecast,step,title):
     plt.title(title)
     plt.show()
     
-    
+def QQplot(serie,title):
+    plt.figure(dpi=1000)
+    stats.probplot(serie, dist="norm", plot=plt)
+    plt.xlabel("Quantili teorici")
+    plt.ylabel("Quantili empirici")
+    plt.title(f"{title} QQplot")
+    plt.grid()
+    plt.show()
     
     
     

@@ -1,5 +1,5 @@
 """
-Auxiliary functions
+Data peparation
 """
 
 import numpy as np
@@ -125,3 +125,62 @@ def cut(serie,alpha):
     serie[serie<lc] = lc
     
     return(serie)
+
+def cut_smart(serie,lb,ub):
+    index_tocut = serie[serie > ub].index
+    while len(index_tocut) > 0:
+        serie.loc[index_tocut] = serie.shift(1).loc[index_tocut]
+        index_tocut = serie[serie > ub].index
+    index_tocut = serie[serie < lb].index
+    while len(index_tocut) > 0:
+        serie.loc[index_tocut] = serie.shift(1).loc[index_tocut]
+        index_tocut = serie[serie < lb].index
+    return(serie)
+
+def cut_smart3(serie1,lb1,ub1,serie2,lb2,ub2,serie3,lb3,ub3):
+    
+    index_tocut = serie1[serie1 > ub1].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]        
+        index_tocut = serie1[serie1 > ub1].index
+    index_tocut = serie1[serie1 < lb1].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]
+        index_tocut = serie1[serie1 < lb1].index
+        
+    index_tocut = serie2[serie2 > ub2].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]        
+        index_tocut = serie2[serie2 > ub2].index
+    index_tocut = serie2[serie2 < lb2].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]
+        index_tocut = serie2[serie2 < lb2].index
+        
+    index_tocut = serie3[serie3 > ub3].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]        
+        index_tocut = serie3[serie3 > ub3].index
+    index_tocut = serie3[serie3 < lb3].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        serie3.loc[index_tocut] = serie3.shift(1).loc[index_tocut]
+        index_tocut = serie3[serie3 < lb3].index
+        
+    return(serie1,serie2,serie3)
+    
+    
+    
+    
+    
