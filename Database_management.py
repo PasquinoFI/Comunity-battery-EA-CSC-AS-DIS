@@ -33,6 +33,49 @@ def read_xml_GME(folder,year,month,day,what):
     return(data)
 
 
+
+def concat_xbid_GME(folder,year1,month1,day1,year2,month2,day2,what,zone):
+      
+      # initialise df with the first day
+      year = year1
+      month = month1
+      day = day1
+      df = read_xml_GME(folder,year,month,day,what)
+      df = df[df['Zone']==zone]
+      
+      # add days
+      days_in_month = {1: 31,2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+      
+      go = 1
+      while go:
+          
+          day += 1
+          
+          if day > days_in_month[month]:
+              day = 1
+              month = month +1
+              if month > 12:
+                  month = 1
+                  year += 1
+                  
+          dfd = read_xml_GME(folder,year,month,day,what)
+          dfd = dfd[dfd['Zone']==zone]
+          df = pd.concat([df, dfd], ignore_index=True)
+          if year == year2 and month == month2 and day == day2:
+              go = 0
+              
+      df.index = pd.to_datetime(df['FlowDate']) + pd.to_timedelta(pd.to_numeric(df['Hour'])-1, unit='h') # 0 - 23 
+      
+      # summer/solar time correction: delete duplicates and reach for skips 
+      df = df[~df.index.duplicated(keep='first')]
+      new_row = df.loc[pd.to_datetime('2023-03-26 22:00:00')].copy()
+      new_row.name = pd.to_datetime('2023-03-26 23:00:00')
+      df.loc[pd.to_datetime('2023-03-26 23:00:00')] = new_row
+      df = df.sort_index()
+      
+      return(df)
+    
+
 def concat_xml_GME(folder,year1,month1,day1,year2,month2,day2,what):
     
     # initialise df with the first day
@@ -180,7 +223,33 @@ def cut_smart3(serie1,lb1,ub1,serie2,lb2,ub2,serie3,lb3,ub3):
         
     return(serie1,serie2,serie3)
     
+def cut_smart2(serie1,lb1,ub1,serie2,lb2,ub2):
     
+    index_tocut = serie1[serie1 > ub1].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]        
+        index_tocut = serie1[serie1 > ub1].index
+    index_tocut = serie1[serie1 < lb1].index
+    
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        index_tocut = serie1[serie1 < lb1].index
+        
+    index_tocut = serie2[serie2 > ub2].index
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]        
+        index_tocut = serie2[serie2 > ub2].index
+    index_tocut = serie2[serie2 < lb2].index
+    
+    while len(index_tocut) > 0:
+        serie1.loc[index_tocut] = serie1.shift(1).loc[index_tocut]
+        serie2.loc[index_tocut] = serie2.shift(1).loc[index_tocut]
+        index_tocut = serie2[serie2 < lb2].index
+        
+    return(serie1,serie2) 
     
     
     

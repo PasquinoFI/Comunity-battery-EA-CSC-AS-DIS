@@ -31,7 +31,7 @@ Reg = -unbalances['Sbil aggregato zonale [MWh]']
 
 # =============================================================================
 # gra.QQplot(Reg, "Reg")
-# gra.QQplot(PR, "PR")
+gra.QQplot(PR, "PR")
 # gra.QQplot(P, "P")
 # =============================================================================
 Reg = dbm.cut_smart(Reg,-1000,1000)
