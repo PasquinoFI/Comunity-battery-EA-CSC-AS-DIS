@@ -43,9 +43,11 @@ df['IM-3'] = pd.to_numeric(Pim3DB[zone].str.replace(',', '.'), errors='coerce').
 df['XBID'] = pd.to_numeric(xbidDB['Riferimento']).round(3)
 df['XBID-LH'] = pd.to_numeric(xbidDB['LastHour']).round(3)
 
-start = datetime.strptime('2023-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-end = datetime.strptime('2023-04-30 00:00:00', '%Y-%m-%d %H:%M:%S')
-df = df[start:end]
+# =============================================================================
+# start = datetime.strptime('2023-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+# end = datetime.strptime('2023-04-30 00:00:00', '%Y-%m-%d %H:%M:%S')
+# df = df[start:end]
+# =============================================================================
 
 df['hour'] = df.index.hour
 dfh = df.groupby(['hour']).mean()
@@ -59,7 +61,7 @@ plt.grid()
 plt.xlabel('Hour')
 plt.ylabel('Average energy price [€/MWh]')
 plt.xlim(0,23)
-plt.ylim(80,210)
+plt.ylim(0,250)
 plt.xticks([0,2,4,6,8,10,12,14,16,18,20,22],[0,2,4,6,8,10,12,14,16,18,20,22])
 plt.show()
 
@@ -114,6 +116,21 @@ plt.show()
 
 
 
+#%% DAM prezzo medio 2024
 
+y1,m1,d1 = 2024,1,1
+y2,m2,d2 = 2024,6,24
+zone = 'PUN'
+PdamDB = dbm.concat_xml_GME("C:/Users/pasqui/Desktop/MercatiElettrici/MGP_Prezzi",y1,m1,d1,y2,m2,d2,"MGPPrezzi")[zone]
+PdamDB.index = pd.to_datetime(PdamDB.index)
+PdamDB = PdamDB.str.replace(',', '.').astype(float)
+hourly_mean = PdamDB.groupby(PdamDB.index.hour).mean()
+hourly_mean.plot()
 
+# =============================================================================
+# full_year = pd.date_range(start='2024-01-01 00:00:00', end='2024-12-31 23:00:00', freq='H')
+# repeated_hourly_mean = pd.Series( data=[hourly_mean[hour] for hour in full_year.hour], index=full_year)
+# repeated_hourly_mean.to_csv('PUN_24a.csv')
+# 
+# =============================================================================
 

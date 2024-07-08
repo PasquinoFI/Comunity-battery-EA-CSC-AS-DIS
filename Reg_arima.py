@@ -46,10 +46,10 @@ def RegF_arima(serie_trial,serie_test,lookahead,alpha):
     forecasts = model.forecast(steps=lookahead)
     
     ####################################################### arima testing and graphs
-    #print(model.summary())
-    #gra.acf_pacf(serie_trial,alpha,"")
-    #gra.pdf(model.resid,"Residuals [MWh]","Residuals distribution")
-    #gra.ARIMAvsRealvsPre(serie_trial[-24:],serie_test,forecasts,lookahead,"")
+    print(model.summary())
+    gra.acf_pacf(serie_trial,alpha,"")
+    gra.pdf(model.resid,"Residuals [MWh]","Residuals distribution")
+    gra.ARIMAvsRealvsPre(serie_trial[-24:],serie_test,forecasts,lookahead,"")
         
     return(forecasts)
     
@@ -86,6 +86,34 @@ def RegF_sarima(serie_trial,serie_test,lookahead,alpha):
     #print(model.summary())
     #gra.acf_pacf(serie_trial,alpha,"")
     #gra.pdf(model.resid,"Residuals [MWh]","Residuals distribution")
+    #gra.ARIMAvsRealvsPre(serie_trial[-24:],serie_test,forecasts,lookahead,"")
+        
+    return(forecasts)
+
+def sign_arima(serie_trial,serie_test,lookahead,alpha,ar):
+    """
+    
+    Parameters
+    ----------
+    Reg : trial serie
+    ar : Auto Regresive order
+    i : Integrated order
+    ma : Moving Average order
+    lookahead : forecast horizon length
+
+    Returns
+    -------
+    forecasts
+
+    """
+    
+    serie_trial.index.freq = 'H'
+
+    model = ARIMA(serie_trial, order=(ar, 0, 0)).fit()
+    forecasts = model.forecast(steps=lookahead)
+    
+    ####################################################### arima testing and graphs
+    #print(model.summary())
     #gra.ARIMAvsRealvsPre(serie_trial[-24:],serie_test,forecasts,lookahead,"")
         
     return(forecasts)

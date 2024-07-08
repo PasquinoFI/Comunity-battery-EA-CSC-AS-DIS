@@ -106,11 +106,13 @@ def concat_xml_GME(folder,year1,month1,day1,year2,month2,day2,what):
     df.index = pd.to_datetime(df['Data']) + pd.to_timedelta(pd.to_numeric(df['Ora'])-1, unit='h') # 0 - 23 
     
     # summer/solar time correction: delete duplicates and reach for skips 
-    df = df[~df.index.duplicated(keep='first')]
-    new_row = df.loc[pd.to_datetime('2023-03-26 22:00:00')].copy()
-    new_row.name = pd.to_datetime('2023-03-26 23:00:00')
-    df.loc[pd.to_datetime('2023-03-26 23:00:00')] = new_row
-    df = df.sort_index()
+# =============================================================================
+#     df = df[~df.index.duplicated(keep='first')]
+#     new_row = df.loc[pd.to_datetime('2023-03-26 22:00:00')].copy()
+#     new_row.name = pd.to_datetime('2023-03-26 23:00:00')
+#     df.loc[pd.to_datetime('2023-03-26 23:00:00')] = new_row
+#     df = df.sort_index()
+# =============================================================================
     
     return(df)
     
