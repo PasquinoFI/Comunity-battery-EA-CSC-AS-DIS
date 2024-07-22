@@ -15,7 +15,7 @@ def empirical_model(filename):
     # ghi [W/m2]' and 'power [W]'
     # a model to predict power from ghi will be created
     
-    pv = pd.read_csv(filename)
+    pv = pd.read_csv(f"input/{filename}")
     X = pv['ghi [W/m2]'].values.reshape(-1, 1)
     y = pv['power [W]'].values
     poly = PolynomialFeatures(3)
@@ -66,8 +66,9 @@ def DWD_forecast2(scenario,ahead,time):
         forecast_time = '18'
         day = str(time-timedelta(hours=24))[:10]
         lag = time.hour+24-18
-        
-    irr = np.load(f"C:\\Users\\pasqui\\Desktop\\GIT\\Comunity-battery-EA-CSC-AS-DIS\\DWD_irradiance\\Location_Lausanne_time_of_forecast_{day}T{forecast_time}.npy")
+       
+    irr = np.load(f"input\\DWD_irradiance\\Location_Lausanne_time_of_forecast_{day}T{forecast_time}.npy")
+    #irr = np.load(f"C:\\Users\\pasqui\\Desktop\\GIT\\Comunity-battery-EA-CSC-AS-DIS\\DWD_irradiance\\Location_Lausanne_time_of_forecast_{day}T{forecast_time}.npy")
     #irr = np.load(f"C:\\Users\\admin\\Desktop\\Comunity-battery-EA-CSC-AS-DIS\\DWD_irradiance\\Location_Lausanne_time_of_forecast_{day}T{forecast_time}.npy")
     irr = irr[scenario,lag:ahead+lag]
     index_vector = []

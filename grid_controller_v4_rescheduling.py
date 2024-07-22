@@ -19,7 +19,7 @@ class controller:
     def __init__(self,grid,bess,load,PVs,economic,simulation):
         
         # grid and bess (only one bess is possible at the moment) (a virtual line is added to the grid to simulate battery-related losses)
-        self.grid = pd.DataFrame(pd.read_csv(grid['filename'],delim_whitespace=True, skipinitialspace=True)).rename_axis("line")
+        self.grid = pd.DataFrame(pd.read_csv(f"input/{grid['filename']}",delim_whitespace=True, skipinitialspace=True)).rename_axis("line")
         self.bess = bess
         self.grid.loc[len(self.grid)] = {'busup':self.bess['bus'],'busdown':len(self.grid)+1,'r[ohm]':self.bess['r'],'x[ohm]':0,'B(S)':0,'/':1,'ampacity[A]':1e3,'length[km]':0}
         self.bess['bus_real'] = self.bess['bus']
@@ -44,10 +44,10 @@ class controller:
         
         # load (only one load is possibile at the moment)
         self.loadbus = load['bus']
-        self.load_h = pd.read_csv(load['filename'],index_col=0)/self.Ab
+        self.load_h = pd.read_csv(f"input/{load['filename']}",index_col=0)/self.Ab
         self.load_h.index = pd.to_datetime(self.load_h.index)
         
-        self.load_xFranci = pd.read_csv(simulation['load_fake_realisation_filename'],index_col=0)
+        self.load_xFranci = pd.read_csv(f"input/{simulation['load_fake_realisation_filename']}",index_col=0)
         self.load_xFranci.index = pd.to_datetime(self.load_xFranci.index)
         self.load_xFranci = self.load_xFranci.resample('1S').ffill() # [W]
         self.load_rtcstep = self.load_xFranci/self.Ab # [pu]
@@ -58,7 +58,7 @@ class controller:
         self.PVs = PVs
         for pv in PVs:
             self.PVs[pv]['lt_forecast_model'] = empirical_model(PVs[pv]['filename_data_h'])
-            self.PVs[pv]['fake_realisation'] = pd.read_csv(PVs[pv]['filename_data'],index_col=0)
+            self.PVs[pv]['fake_realisation'] = pd.read_csv(f"input/{PVs[pv]['filename_data']}",index_col=0)
             self.PVs[pv]['fake_realisation'].index = pd.to_datetime(self.PVs[pv]['fake_realisation'].index).tz_localize(None)
             if self.rtc_step > 120:
                 self.PVs[pv]['fake_realisation'] = self.PVs[pv]['fake_realisation'].resample(f"{int(self.rtc_step)}S").mean()
@@ -66,7 +66,7 @@ class controller:
                 self.PVs[pv]['fake_realisation'] = self.PVs[pv]['fake_realisation'].resample(f"{int(self.rtc_step)}S").ffill()
         
         # economic
-        self.ep = pd.read_csv(economic['ep_filename'],index_col=0)/1e6 # [€/MWh] -> [€/Wh]
+        self.ep = pd.read_csv(f"input/{economic['ep_filename']}",index_col=0)/1e6 # [€/MWh] -> [€/Wh]
         self.ep.index = pd.to_datetime(self.ep.index)
         self.acost = economic['acost']/1e3 # [€/kWh] -> [€/Wh]
         self.cscinc = economic['cscinc']/1e3 # [€/kWh] -> [€/Wh]
@@ -117,8 +117,8 @@ class controller:
     def pv_lt_forecast_sim(self):
         self.p_pv = pd.DataFrame(index=self.scheduling_time_index, columns=[f"prod_{i} [W]" for i in range(self.S)])
         self.q_pv = pd.DataFrame(index=self.scheduling_time_index, columns=[f"prod_{i} [W]" for i in range(self.S)])
-        self.p_pv = self.p_pv.applymap(lambda x: [0]*self.B)
-        self.q_pv = self.q_pv.applymap(lambda x: [0]*self.B)
+        self.p_pv = self.p_pv.map(lambda x: [0]*self.B)
+        self.q_pv = self.q_pv.map(lambda x: [0]*self.B)
         for pv in self.PVs:
             for s in range(self.S):
                 if s == 0:
@@ -207,8 +207,8 @@ class controller:
     def load_lt_forecast(self):
         self.p_load = pd.DataFrame(index=self.scheduling_time_index, columns=[f"load_{i} [W]" for i in range(self.S)])
         self.q_load = pd.DataFrame(index=self.scheduling_time_index, columns=[f"load_{i} [W]" for i in range(self.S)])
-        self.p_load = self.p_load.applymap(lambda x: [0]*self.B)   
-        self.q_load = self.q_load.applymap(lambda x: [0]*self.B) 
+        self.p_load = self.p_load.map(lambda x: [0]*self.B)   
+        self.q_load = self.q_load.map(lambda x: [0]*self.B) 
         for s in range(self.S):
             for h in range(self.Hor):
                 self.p_load.iloc[h,s][self.loadbus] = self.load_h.loc[self.scheduling_time_index].iloc[h,s] # set load bus injection [pu]
@@ -622,7 +622,7 @@ class controller:
             tcs = tcs.strftime("%Y-%m-%d_%H-%M-%S")
             SoE_df = pd.DataFrame.from_dict(a.SoE_s, orient='index', columns=['value'])
             SoE_df.to_csv(f"results/{tcs}_SoE_s.csv")
-            P_df = pd.DataFrame.from_dict(a.SoE_s, orient='index', columns=['value'])
+            P_df = pd.DataFrame.from_dict(a.P, orient='index', columns=['value'])
             P_df.to_csv(f"results/{tcs}_P.csv")
             for pv in self.PVs:
                 self.PVs[pv]['pro'].to_csv(f"results/{tcs}_PVs_{pv}.csv")
@@ -765,7 +765,7 @@ if __name__=='__main__': #######################################################
            'Solarmax': {'bus':8, 'filename_data_h':'PV_Solarmax realisation_h.csv', 'filename_data':'PV_Solarmax realisation.csv'}}
     economic = {'ep_filename':'PUN24a.csv', 'acost':0.15, 'cscinc':0.12, 'unbcost':10}
     simulation = {'scenarios':40, 'load_fake_realisation_filename':'12_residential_load_profiles_s1_5minutes.csv', 'bidding_lag':1,
-                  'horizon':24, 'Ks':1, 'Kc':1, 'rtc_step':30, 'start':'2024-06-26 08:00:00', 'end':'2024-06-27 07:00:00'}
+                  'horizon':24, 'Ks':1, 'Kc':1, 'rtc_step':30, 'start':'2024-06-17 00:00:00', 'end':'2024-06-17 00:00:00'}
     
     
     # RAN ##########################################################################################
@@ -773,30 +773,29 @@ if __name__=='__main__': #######################################################
     a = controller(grid,bess,load,PVs,economic,simulation) # class initialisation
     
     
+    
+    #### RESCHEDULIN
     # carica gli soe da usare per il rescheduling (quelli dell'esperimento)
-    tcs = datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S')
-    tcs = tcs.strftime("%Y-%m-%d_%H-%M-%S")
-    soes = pd.read_csv(f"results/TEST_4final/{tcs}_bess_SoE.csv",index_col=0)
-    soes.index = pd.to_datetime(soes.index)
-    soe = []
-    data = datetime.strptime('2024-06-26 08:00:00', '%Y-%m-%d %H:%M:%S')
-    while data <= datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S'):
-        soe += [soes.loc[data]['pu']]
-        data += timedelta(hours=1)        
-    
-    
-    SoE_realisations = pd.DataFrame(soe,index=pd.date_range(start=a.time_start, end=a.time_end, freq='H'),columns=['pu'])
-    a.run_rescheduling(SoE_realisations)
-    
-
 # =============================================================================
-#     a.run_simulation() # simulation
-#     control_plot(a.DP_bidded,a.DP_real,a.Ab,a.rtc_step,a.p_bess_set_real,a.bess['SoE'],a.bess['SoE_max'],sim=True)
-#     a.save_csv(a.time_control_start)
+#     tcs = datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S')
+#     tcs = tcs.strftime("%Y-%m-%d_%H-%M-%S")
+#     soes = pd.read_csv(f"results/TEST_4final/{tcs}_bess_SoE.csv",index_col=0)
+#     soes.index = pd.to_datetime(soes.index)
+#     soe = []
+#     data = datetime.strptime('2024-06-26 08:00:00', '%Y-%m-%d %H:%M:%S')
+#     while data <= datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S'):
+#         soe += [soes.loc[data]['pu']]
+#         data += timedelta(hours=1)         
+#     SoE_realisations = pd.DataFrame(soe,index=pd.date_range(start=a.time_start, end=a.time_end, freq='H'),columns=['pu'])
+#     a.run_rescheduling(SoE_realisations)
 # =============================================================================
     
 
-
+    ### SIMULATIONS
+    a.run_simulation() # simulation
+    #control_plot(a.DP_bidded,a.DP_real,a.Ab,a.rtc_step,a.p_bess_set_real,a.bess['SoE'],a.bess['SoE_max'],sim=True)
+    #a.save_csv(a.time_control_start)
+    
 
 
 
@@ -903,7 +902,9 @@ if __name__=='__main__': #######################################################
 
 #%% POST PROCESSING CON I DATI SALVATIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
+
 # =============================================================================
+#     # grafico control
 #     import pandas as pd
 #     tcs = datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S')
 #     tcs = tcs.strftime("%Y-%m-%d_%H-%M-%S")
@@ -912,46 +913,39 @@ if __name__=='__main__': #######################################################
 #     p_bess_set_real = pd.read_csv(f"results/TEST_4final/{tcs}_p_bess_set_real.csv",index_col=0)        
 #     soes = pd.read_csv(f"results/TEST_4final/{tcs}_bess_SoE.csv",index_col=0)
 #     
-#     load = pd.read_csv("12_residential_load_profiles_s1_5minutes.csv",index_col=0)
-#     pv = pd.read_csv("PV_PVFacade realisation.csv",index_col=0)
-#     pv2 = pd.read_csv("PV_Solarmax realisation.csv",index_col=0)
+#     load = pd.read_csv("input/12_residential_load_profiles_s1_5minutes.csv",index_col=0)
+#     pv = pd.read_csv("input/PV_PVFacade realisation.csv",index_col=0)
+#     pv2 = pd.read_csv("input/PV_Solarmax realisation.csv",index_col=0)
 #     load.index = pd.to_datetime(load.index)
 #     pv.index = pd.to_datetime(pv.index)
 #     pv2.index = pd.to_datetime(pv2.index)
 #     pv = pv + pv2
+#     pv=-pv
+#     pv = pv.shift(freq='1H')
 #     load = load.loc[datetime.strptime('2024-06-26 08:00:00', '%Y-%m-%d %H:%M:%S'):datetime.strptime('2024-06-27 07:00:00', '%Y-%m-%d %H:%M:%S')]
 #     pv = pv.loc[pd.to_datetime('2024-06-26 08:00:00').tz_localize('UTC'):pd.to_datetime('2024-06-27 07:00:00').tz_localize('UTC')]
-#     
-#     
 #     control_plot_final(DP_bidded,DP_real,a.Ab,a.rtc_step,p_bess_set_real.iloc[1:],soes,a.bess['SoE_max'],pv,load,sim=2)
-# 
-# =============================================================================
-    
-
-# =============================================================================
+#     
+#     
+#     # grafico scheduling
 #     tcs = datetime.strptime('2024-06-26 08:00:00', '%Y-%m-%d %H:%M:%S')
 #     tcs = tcs.strftime("%Y-%m-%d_%H-%M-%S")
-# 
-#     SoE_s = pd.read_csv(f"results/{tcs}_SoE_s.csv",index_col=0)
+#     SoE_s = pd.read_csv(f"results/TEST_4final/{tcs}_SoE_s.csv",index_col=0)
 #     SoE_s.index = SoE_s.index.map(eval)
-#     
-#     P = pd.read_csv(f"results/{tcs}_P.csv",index_col=0)
+#     P = pd.read_csv(f"results/TEST_4final/{tcs}_P.csv",index_col=0)
 #     P.index = P.index.map(eval)
-#     
 #     PVss = {}
 #     for pv in a.PVs:
 #         PVss[pv] = {}
-#         PVss[pv]['pro'] = pd.read_csv(f"results/{tcs}_PVs_{pv}.csv",index_col=0)
-#         
-#     DP = pd.read_csv(f"results/{tcs}_DP.csv",index_col=0)
-#     load_h = pd.read_csv(f"results/{tcs}_load_h.csv",index_col=0)
+#         PVss[pv]['pro'] = pd.read_csv(f"results/TEST_4final/{tcs}_PVs_{pv}.csv",index_col=0)
+#     DP = pd.read_csv(f"results/TEST_4final/{tcs}_DP.csv",index_col=0)
+#     load_h = pd.read_csv(f"results/TEST_4final/{tcs}_load_h.csv",index_col=0)
 #     load_h.index = pd.to_datetime(load_h.index)
-#     ep = pd.read_csv(f"results/{tcs}_ep.csv",index_col=0)
-#     
+#     ep = pd.read_csv(f"results/TEST_4final/{tcs}_ep.csv",index_col=0)
 #     scheduling_plot(f"{tcs} scheduling",a.S,a.Hor,SoE_s,a.bess['SoE_max'],P,DP,PVss,load_h,a.bess['bus'],a.Ab,ep,fromdatasaved=True)
 # 
 # 
+#     
 # =============================================================================
-    
     
    
