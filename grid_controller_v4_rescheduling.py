@@ -759,13 +759,13 @@ if __name__=='__main__': #######################################################
 #     
 # =============================================================================
     grid = {'filename':'linedata_AC_test.txt', 'Ab':60000, 'Eb':400}
-    bess = {'bus':6, 'r':0.6, 'SoE_max':60000, 'SoE':30000, 'P_max':30000}
+    bess = {'bus':6, 'r':0.06, 'SoE_max':60000, 'SoE':30000, 'P_max':30000}
     load = {'bus':2, 'filename':'12_residential_load_profiles_40s_hourly.csv'}
     PVs = {'PVFacade': {'bus':8, 'filename_data_h':'PV_PVFacade realisation_h.csv', 'filename_data':'PV_PVFacade realisation.csv'},
            'Solarmax': {'bus':8, 'filename_data_h':'PV_Solarmax realisation_h.csv', 'filename_data':'PV_Solarmax realisation.csv'}}
-    economic = {'ep_filename':'PUN24a.csv', 'acost':0.15, 'cscinc':0.12, 'unbcost':10}
+    economic = {'ep_filename':'PUN24a.csv', 'acost':0.15, 'cscinc':0.12, 'unbcost':0.45}
     simulation = {'scenarios':40, 'load_fake_realisation_filename':'12_residential_load_profiles_s1_5minutes.csv', 'bidding_lag':1,
-                  'horizon':24, 'Ks':1, 'Kc':1, 'rtc_step':30, 'start':'2024-06-17 00:00:00', 'end':'2024-06-17 00:00:00'}
+                  'horizon':24, 'Ks':1, 'Kc':1, 'rtc_step':60*5, 'start':'2024-06-17 00:00:00', 'end':'2024-06-17 00:00:00'}
     
     
     # RAN ##########################################################################################
@@ -946,6 +946,45 @@ if __name__=='__main__': #######################################################
 # 
 # 
 #     
+#     from datetime import datetime, timedelta
+#     import pandas as pd
+#     import matplotlib.pyplot as plt
+#     
+#     # Initialize starting time
+#     tcs = datetime.strptime('2024-06-26 08:00:00', '%Y-%m-%d %H:%M:%S')
+#     
+#     plt.figure(dpi=1000, figsize=(9, 3))
+#     step = 3
+#     for t in range(24):
+#         tcss = tcs.strftime("%Y-%m-%d_%H-%M-%S")
+#         dp = pd.read_csv(f"results/TEST_4final/{tcss}_DP.csv", index_col=0, parse_dates=True)
+#         tcs += timedelta(hours=1)
+#         if t % step == 0:
+#             plt.plot(dp.index, dp['pu'] * 60000, label=dp.index[0].strftime('%H'))
+#     
+#     # Customize x-axis
+#     xticks = pd.date_range(start='2024-06-26 08:00', end='2024-06-28 08:00', freq=f"{step}H")
+#     xticks_labels = [d.strftime('%H') for d in xticks]
+#     
+#     plt.gca().set_xticks(xticks)
+#     plt.gca().set_xticklabels(xticks_labels)
+#     
+#     # Additional plot settings
+#     plt.legend()
+#     plt.grid()
+#     plt.xlim(xticks[0],xticks[-1])
+#     plt.ylabel("DP [kWh]")
+#     plt.show()
+# 
+# 
 # =============================================================================
+
+
+
+
+
+    
+
+    
     
    

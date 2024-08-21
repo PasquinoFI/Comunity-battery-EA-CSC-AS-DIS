@@ -66,12 +66,15 @@ def scheduling_plot(title,S,T,SoE,SoE_max,P,DP,PVs,Load,bess_bus,Ab,EP,fromdatas
     ax5.set_ylabel('GCP [Wh]')
     ax5.set_xticks(x[::3], labels=hours[::3])
     ax5.set_xlim(x[0],x[-1])
+    ax5.axhline(y=0, color='black', linestyle='--')
+
     
     ax6.plot(x,DP*Ab)
     ax6.set_ylabel('DP [Wh]')
     ax6.grid()
     ax6.set_xticks(x[::3], labels=hours[::3])
     ax6.set_xlim(x[0],x[-1])
+    ax6.axhline(y=0, color='black', linestyle='--')
     
     ax3.plot(x,EP*1000)
     ax3.grid()
@@ -79,7 +82,14 @@ def scheduling_plot(title,S,T,SoE,SoE_max,P,DP,PVs,Load,bess_bus,Ab,EP,fromdatas
     ax3.set_xticks(x[::3], labels=hours[::3])
     ax3.set_xlim(x[0],x[-1])
     
-    plt.suptitle(title)
+    #plt.suptitle(title)
+    #plt.suptitle("cloudy day 02/06/24")
+    #plt.suptitle("sunny day 18/06/24")
+    plt.suptitle("variable weather day 17/06/24")
+    #plt.suptitle("$act^{cost}$ = 0.13 €/kWh")
+    #plt.suptitle("$act^{cost}$ = 0.10 €/kWh")
+    #plt.suptitle("$dis^{cost}$ = 0.45 €/kWh")
+    #plt.suptitle("26/06/24 07:57 scheduling")
     plt.tight_layout()
     plt.show()
     return()

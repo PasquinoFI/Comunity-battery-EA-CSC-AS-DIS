@@ -52,7 +52,7 @@ def scheduling_iDistFlow(pco,qco,vco,vap,grid,p_pv,p_load,q_pv,q_load,bess_bus,S
     neg = m.addVars(S,T,B, vtype=gp.GRB.BINARY, name="neg") # auxiliary variable for p_pv_neg [1/0]
 
     # Objective funtion
-    AC = acost * gp.quicksum(abs_p_bess[s,t,b] for s in range(S) for t in range(T) for b in range(B))/ 2 / S
+    AC = acost * gp.quicksum(abs_p_bess[s,t,b] for s in range(S) for t in range(T) for b in range(B)) / 2 / S
     INC = cscinc * gp.quicksum(csc[s,t] for s in range(S) for t in range(T)) / S
     DIS = unbcost * gp.quicksum(abs_unb[s,t] for s in range(S) for t in range(T)) / S
     EA = -gp.quicksum(DP[t]*EP.iloc[t,0] for t in range(T))
